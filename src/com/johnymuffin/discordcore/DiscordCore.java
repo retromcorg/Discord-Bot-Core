@@ -17,7 +17,7 @@ public class DiscordCore extends JavaPlugin implements Listener {
     private String pluginName;
     private PluginDescriptionFile pdf;
     //Plugin Fields
-    private Discordbot Discord;
+    private DiscordBot discord;
 
 
     public void onEnable() {
@@ -29,7 +29,7 @@ public class DiscordCore extends JavaPlugin implements Listener {
         logInfo(Level.INFO, "THIS PLUGIN IS LICENSED UNDER GNU.");
 
         //Config Information Start
-        File file = new File(plugin.getDataFolder(), "config.properties");
+        File file = new File(plugin.getDataFolder(), "config.yml");
         file.getParentFile().mkdirs();
         Configuration configuration = new Configuration(file);
         configuration.load();
@@ -38,25 +38,36 @@ public class DiscordCore extends JavaPlugin implements Listener {
             configuration.setProperty("token", "token");
             configuration.save();
             Bukkit.getServer().getPluginManager().disablePlugin(plugin);
+            return;
         }
         //Config Information End
         logInfo(Level.INFO, "Starting internal Discord Bot.");
         try {
-            Discord = new Discordbot(this, configuration.getString("token"));
+            discord = new DiscordBot(this);
+            discord.startBot(configuration.getString("token"));
         } catch (Exception e) {
-
+            logInfo(Level.WARNING, e + ": " + e.getMessage());
+            Bukkit.getServer().getPluginManager().disablePlugin(plugin);
+            return;
         }
     }
 
     public void onDisable() {
         logInfo(Level.INFO, "Disabling plugin.");
-        Discord.DiscordbotStop();
+        if (discord != null) {
+            discord.discordBotStop();
+        }
         logInfo(Level.INFO, "Disabled.");
     }
 
-    public Discordbot Discord() {
+    @Deprecated
+    public DiscordBot Discord() {
         //Return Bot for other plugins
-        return Discord;
+        return discord;
+    }
+
+    public DiscordBot getDiscordBot() {
+        return discord;
     }
 
     public void logInfo(Level level, String s) {
