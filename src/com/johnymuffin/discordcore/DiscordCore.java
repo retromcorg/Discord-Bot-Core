@@ -1,62 +1,67 @@
 package com.johnymuffin.discordcore;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.Logger;
-import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.config.Configuration;
+
+import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DiscordCore extends JavaPlugin implements Listener {
-	public ConsoleCommandSender console;
-	Logger logger;
-	Discordbot Discord;
-	// Config
-	private ConfigReader configReader;
-	public static final String PLUGIN_FOLDER = "./plugins/DiscordCore";
-	private File pluginFolder = new File("./plugins/DiscordCore");
-	File config;
+    //Basic Plugin Info
+    private static DiscordCore plugin;
+    private Logger log;
+    private String pluginName;
+    private PluginDescriptionFile pdf;
+    //Plugin Fields
+    private Discordbot Discord;
 
-	public void onLoad() {
-		this.config = new File(this.pluginFolder, "config.properties");
-		this.logger = getServer().getLogger();
-		if (!this.pluginFolder.exists() || !this.pluginFolder.exists()) {
-			this.pluginFolder.mkdirs();
-		}
 
-		if (!this.config.exists()) {
-			try {
-				this.config.createNewFile();
-			} catch (IOException var2) {
-				var2.printStackTrace();
-			}
-		}
-	}
+    public void onEnable() {
+        plugin = this;
+        log = this.getServer().getLogger();
+        pdf = this.getDescription();
+        pluginName = pdf.getName();
+        logInfo(Level.INFO, "Is Loading, Version: " + pdf.getVersion() + ".");
+        logInfo(Level.INFO, "THIS PLUGIN IS LICENSED UNDER GNU.");
 
-	public void onEnable() {
-		this.configReader = new ConfigReader(this);
-		this.logger = getServer().getLogger();
-		this.logger.info("[DiscordCore] Enabling DiscordCore");
-		this.logger.info("[DiscordCore] THIS PLUGIN IS LICENSED UNDER GNU");
-		//this.logger.info("[DiscordCore] TOKEN " + this.configReader.getToken());		
-		if(!this.configReader.getToken().isEmpty()) {
-			Discord = new Discordbot(this, this.configReader.getToken());
-		} else {
-			this.logger.warning(
-					"----------------------------------------------------------\nPLEASE PROVIDE A TOKEN FOR DISCORD\n----------------------------------------------------------");
-		}
+        //Config Information Start
+        File file = new File(plugin.getDataFolder(), "config.properties");
+        file.getParentFile().mkdirs();
+        Configuration configuration = new Configuration(file);
+        configuration.load();
+        if (configuration.getProperty("token") == null || configuration.getString("token").equalsIgnoreCase("token") || configuration.getString("token").isEmpty()) {
+            plugin.logInfo(Level.WARNING, "Failed to find a Discord token in the config file, shutting down.");
+            configuration.setProperty("token", "token");
+            configuration.save();
+            Bukkit.getServer().getPluginManager().disablePlugin(plugin);
+        }
+        //Config Information End
+        logInfo(Level.INFO, "Starting internal Discord Bot.");
+        try {
+            Discord = new Discordbot(this, configuration.getString("token"));
+        } catch (Exception e) {
 
-	}
+        }
+    }
 
-	public void onDisable() {
-		this.logger.info("[DiscordCore] Disabling DiscordCore...");
-		//Bukkit.getServer().getScheduler().cancelTask(taskId);
-		Discord.DiscordbotStop();
-	}
+    public void onDisable() {
+        logInfo(Level.INFO, "Disabling plugin.");
+        Discord.DiscordbotStop();
+        logInfo(Level.INFO, "Disabled.");
+    }
 
-	public Discordbot Discord() {
-		//Return Bot for other plugins
-		return Discord;
-	}
+    public Discordbot Discord() {
+        //Return Bot for other plugins
+        return Discord;
+    }
+
+    public void logInfo(Level level, String s) {
+        log.log(level, "[" + pluginName + "] " + s);
+    }
+
 
 }
