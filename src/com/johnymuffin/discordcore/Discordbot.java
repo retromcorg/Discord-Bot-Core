@@ -22,7 +22,7 @@ public class DiscordBot extends ListenerAdapter {
     }
 
     public void startBot(String token) throws LoginException {
-        jda = JDABuilder.createDefault(token).build();
+        jda = JDABuilder.createDefault(token).enableIntents(GatewayIntent.GUILD_MEMBERS).build();
         jda.addEventListener(this);
 
     }
