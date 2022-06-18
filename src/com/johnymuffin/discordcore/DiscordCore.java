@@ -22,29 +22,46 @@ public class DiscordCore extends JavaPlugin implements Listener {
 
     public void onEnable() {
         plugin = this;
-        log = this.getServer().getLogger();
+        log = Bukkit.getServer().getLogger();
         pdf = this.getDescription();
         pluginName = pdf.getName();
         logInfo(Level.INFO, "Is Loading, Version: " + pdf.getVersion() + ".");
         logInfo(Level.INFO, "THIS PLUGIN IS LICENSED UNDER GNU.");
 
         //Config Information Start
-        File file = new File(plugin.getDataFolder(), "config.yml");
-        file.getParentFile().mkdirs();
-        Configuration configuration = new Configuration(file);
-        configuration.load();
-        if (configuration.getProperty("token") == null || configuration.getString("token").equalsIgnoreCase("token") || configuration.getString("token").isEmpty()) {
+        String softToken = null;
+        try {
+            File file = new File(plugin.getDataFolder(), "config.yml");
+            file.getParentFile().mkdirs();
+            Configuration configuration = new Configuration(file);
+            configuration.load();
+            if (configuration.getProperty("token") == null || configuration.getString("token").equalsIgnoreCase("token") || configuration.getString("token").isEmpty()) {
+                configuration.setProperty("token", "token");
+                configuration.save();
+                Bukkit.getServer().getPluginManager().disablePlugin(plugin);
+            } else {
+                softToken = (String) configuration.getProperty("token");
+            }
+        } catch (Exception e) {
+            try {
+                DCConfigReader dcConfigReader = new DCConfigReader(plugin);
+                softToken = dcConfigReader.getToken();
+            } catch (Exception e2) {
+                logInfo(Level.WARNING, "Unable to use backup ");
+            }
+        }
+
+        if(softToken == null || softToken.equalsIgnoreCase("token") || softToken.isEmpty()) {
             plugin.logInfo(Level.WARNING, "Failed to find a Discord token in the config file, shutting down.");
-            configuration.setProperty("token", "token");
-            configuration.save();
             Bukkit.getServer().getPluginManager().disablePlugin(plugin);
             return;
         }
+
         //Config Information End
         logInfo(Level.INFO, "Starting internal Discord Bot.");
         try {
             discord = new DiscordBot(this);
-            discord.startBot(configuration.getString("token"));
+            discord.startBot(softToken);
         } catch (Exception e) {
             logInfo(Level.WARNING, e + ": " + e.getMessage());
             Bukkit.getServer().getPluginManager().disablePlugin(plugin);
@@ -55,6 +72,9 @@ public class DiscordCore extends JavaPlugin implements Listener {
     public void onDisable() {
         logInfo(Level.INFO, "Disabling plugin.");
         if (discord != null) {
+            DiscordShutdownEvent shutdownEvent = new DiscordShutdownEvent();
+            Bukkit.getServer().getPluginManager().callEvent(shutdownEvent);
+
             discord.discordBotStop();
         }
         logInfo(Level.INFO, "Disabled.");
