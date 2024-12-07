@@ -1,5 +1,7 @@
 package com.johnymuffin.discordcore;
 
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.oldschoolminecraft.discordcore.ReduxConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -7,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +21,7 @@ public class DiscordCore extends JavaPlugin implements Listener {
     private PluginDescriptionFile pdf;
     //Plugin Fields
     private DiscordBot discord;
+    private ReduxConfig reduxConfig;
 
 
     public void onEnable() {
@@ -28,28 +32,10 @@ public class DiscordCore extends JavaPlugin implements Listener {
         logInfo(Level.INFO, "Is Loading, Version: " + pdf.getVersion() + ".");
         logInfo(Level.INFO, "THIS PLUGIN IS LICENSED UNDER GNU.");
 
+        reduxConfig = new ReduxConfig(new File(getDataFolder(), "config.yml"));
+
         //Config Information Start
-        String softToken = null;
-        try {
-            File file = new File(plugin.getDataFolder(), "config.yml");
-            file.getParentFile().mkdirs();
-            Configuration configuration = new Configuration(file);
-            configuration.load();
-            if (configuration.getProperty("token") == null || configuration.getString("token").equalsIgnoreCase("token") || configuration.getString("token").isEmpty()) {
-                configuration.setProperty("token", "token");
-                configuration.save();
-                Bukkit.getServer().getPluginManager().disablePlugin(plugin);
-            } else {
-                softToken = (String) configuration.getProperty("token");
-            }
-        } catch (Exception e) {
-            try {
-                DCConfigReader dcConfigReader = new DCConfigReader(plugin);
-                softToken = dcConfigReader.getToken();
-            } catch (Exception e2) {
-                logInfo(Level.WARNING, "Unable to use backup ");
-            }
-        }
+        String softToken = reduxConfig.getString("token", "NO_TOKEN_PROVIDED");
 
         if(softToken == null || softToken.equalsIgnoreCase("token") || softToken.isEmpty()) {
             plugin.logInfo(Level.WARNING, "Failed to find a Discord token in the config file, shutting down.");
@@ -57,11 +43,25 @@ public class DiscordCore extends JavaPlugin implements Listener {
             return;
         }
 
+        ArrayList<String> rawIntentList = (ArrayList<String>) reduxConfig.getConfigOption("intents");
+        ArrayList<GatewayIntent> intents = new ArrayList<>();
+        for (String str : rawIntentList)
+        {
+            GatewayIntent intent = null;
+
+            try
+            {
+                intent = GatewayIntent.valueOf(str);
+            } catch (IllegalArgumentException ignored) {}
+
+            if (intent != null) intents.add(intent);
+        }
+
         //Config Information End
         logInfo(Level.INFO, "Starting internal Discord Bot.");
         try {
             discord = new DiscordBot(this);
-            discord.startBot(softToken);
+            discord.startBot(softToken, intents);
         } catch (Exception e) {
             logInfo(Level.WARNING, e + ": " + e.getMessage());
             Bukkit.getServer().getPluginManager().disablePlugin(plugin);

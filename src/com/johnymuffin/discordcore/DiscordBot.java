@@ -1,6 +1,5 @@
 package com.johnymuffin.discordcore;
 
-import net.dv8tion.jda.api.AccountType;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -10,6 +9,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 
 import javax.security.auth.login.LoginException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 
@@ -22,8 +22,8 @@ public class DiscordBot extends ListenerAdapter {
         this.plugin = main;
     }
 
-    public void startBot(String token) throws LoginException {
-        jda = JDABuilder.createDefault(token).enableIntents(GatewayIntent.GUILD_MEMBERS).setMemberCachePolicy(MemberCachePolicy.ALL).build();
+    public void startBot(String token, ArrayList<GatewayIntent> intents) throws LoginException {
+        jda = JDABuilder.createDefault(token).enableIntents(intents).setMemberCachePolicy(MemberCachePolicy.ALL).build();
         jda.addEventListener(this);
 
     }
