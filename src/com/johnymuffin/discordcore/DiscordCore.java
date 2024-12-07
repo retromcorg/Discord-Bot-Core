@@ -35,9 +35,9 @@ public class DiscordCore extends JavaPlugin implements Listener {
         reduxConfig = new ReduxConfig(new File(getDataFolder(), "config.yml"));
 
         //Config Information Start
-        String softToken = reduxConfig.getString("token", "NO_TOKEN_PROVIDED");
+        String softToken = reduxConfig.getString("token", "INSERT_TOKEN_HERE");
 
-        if(softToken == null || softToken.equalsIgnoreCase("token") || softToken.isEmpty()) {
+        if(softToken == null || softToken.equalsIgnoreCase("INSERT_TOKEN_HERE") || softToken.isEmpty()) {
             plugin.logInfo(Level.WARNING, "Failed to find a Discord token in the config file, shutting down.");
             Bukkit.getServer().getPluginManager().disablePlugin(plugin);
             return;
