@@ -10,6 +10,8 @@ import org.bukkit.util.config.Configuration;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,7 +45,7 @@ public class DiscordCore extends JavaPlugin implements Listener {
             return;
         }
 
-        ArrayList<String> rawIntentList = (ArrayList<String>) reduxConfig.getConfigOption("intents");
+        List<String> rawIntentList = reduxConfig.getStringList("intents", Arrays.asList("GUILD_MEMBERS", "DIRECT_MESSAGES", "MESSAGE_CONTENT"));
         ArrayList<GatewayIntent> intents = new ArrayList<>();
         for (String str : rawIntentList)
         {
